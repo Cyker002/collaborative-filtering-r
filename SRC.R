@@ -1,29 +1,25 @@
-# =======================================================
-# PROJETO: SISTEMA DE RECOMENDAÇÃO MATRICIAL (MODULAR)
-# =======================================================
 
-# -------------------------------------------------------
-# 1. ÁREA DOS SUBPROGRAMAS (FUNÇÕES)
-# -------------------------------------------------------
 
-# Função 1: Captura e limpa os nomes digitados no Console
+#funções
+
+#Input dos nomes dos usuários
 obter_usuarios <- function() {
   entrada <- readline(prompt = "Digite os nomes dos usuários separados por vírgula: ")
   nomes <- trimws(unlist(strsplit(entrada, ",")))
   return(nomes)
 }
 
-# Função 2: Constrói a matriz com o catálogo estático e os usuários dinâmicos
+#gerar matriz de usuários dinâmicos por filmes predefindos(10)
 gerar_matriz_teste <- function(nomes_usuarios, catalogo_filmes) {
   qtd_u <- length(nomes_usuarios)
   qtd_f <- length(catalogo_filmes)
   
-  # Cria matriz vazia e adiciona as etiquetas
+  # cria matriz vazia
   matriz <- matrix(NA, nrow = qtd_u, ncol = qtd_f)
   rownames(matriz) <- nomes_usuarios
   colnames(matriz) <- catalogo_filmes
   
-  # Preenche com notas aleatórias e NAs para simular o banco de dados
+  # Preenche com notas aleatórias e NAs 
   matriz[] <- sample(
     c(1, 2, 3, 4, 5, NA), 
     size = (qtd_u * qtd_f), 
@@ -34,46 +30,63 @@ gerar_matriz_teste <- function(nomes_usuarios, catalogo_filmes) {
   return(matriz)
 }
 
-# Função 3: O Motor Matemático (Álgebra Linear)
+#multiplica a matriz pela sua transposta para descobrir a afinidade 
 calcular_similaridade <- function(matriz_notas) {
   matriz_calc <- matriz_notas
   matriz_calc[is.na(matriz_calc)] <- 0 # Tratamento de dados vazios
-  
-  # Processo matricial: Matriz * Transposta
+   
+  # matriz * Transposta
   similaridade <- matriz_calc %*% t(matriz_calc)
   
   diag(similaridade) <- 0 # Zera a diagonal (ninguém é recomendado para si mesmo)
   return(similaridade)
 }
 
-# Função 4: O Algoritmo de Sugestão
+
 gerar_recomendacao <- function(usuario_alvo, matriz_notas, matriz_similaridade) {
-  matriz_calc <- matriz_notas
-  matriz_calc[is.na(matriz_calc)] <- 0 
   
-  # Descobre quais filmes o usuário alvo ainda não viu
-  filmes_nao_vistos <- is.na(matriz_notas[usuario_alvo, ])
+  # 1. Isola as afinidades do alvo
+  afinidades <- matriz_similaridade[usuario_alvo, ]
   
-  # Proteção: Se ele já viu tudo, encerra o subprograma
-  if(!any(filmes_nao_vistos)) {
-    return("Este usuário já avaliou todos os filmes do catálogo.")
+  # 2. Descobre quem é o "Melhor Amigo" (o usuário com a maior pontuação de afinidade)
+  melhor_amigo <- names(sort(afinidades, decreasing = TRUE))[1]
+  
+  # Proteção: Se a maior afinidade for 0, o alvo não tem nada em comum com ninguém
+  if(afinidades[melhor_amigo] == 0) {
+    return("Não há usuários com gostos similares suficientes para gerar uma recomendação.")
   }
   
-  # Multiplica a linha de afinidade pelas notas do banco de dados (drop=FALSE protege a dimensão)
-  notas_estimadas <- matriz_similaridade[usuario_alvo, , drop = FALSE] %*% matriz_calc
+  # 3. Pega as notas do Melhor Amigo e descobre qual foi a MAIOR nota que ele deu
+  notas_do_amigo <- matriz_notas[melhor_amigo, ]
   
-  # Filtra apenas o que não foi visto e ordena do melhor para o pior
-  recomendacoes <- notas_estimadas[1, filmes_nao_vistos]
-  recomendacoes_ordenadas <- sort(recomendacoes, decreasing = TRUE)
+  # Tira os 'NA' para a matemática conseguir achar o valor máximo
+  notas_validas_amigo <- notas_do_amigo[!is.na(notas_do_amigo)] 
+  maior_nota_encontrada <- max(notas_validas_amigo)
   
-  return(recomendacoes_ordenadas)
+  # Agora filtra os filmes que receberam exatamente essa nota máxima
+  filmes_que_o_amigo_amou <- names(notas_do_amigo[!is.na(notas_do_amigo) & notas_do_amigo == maior_nota_encontrada])
+  
+  # 4. Pega a linha do alvo e descobre o que ele AINDA NÃO VIU (onde é NA)
+  notas_do_alvo <- matriz_notas[usuario_alvo, ]
+  filmes_nao_vistos <- names(notas_do_alvo[is.na(notas_do_alvo)])
+  
+  # 5. O Match Lógico: Filmes com a nota máxima do amigo E que o alvo não viu
+  sugestoes_finais <- intersect(filmes_que_o_amigo_amou, filmes_nao_vistos)
+  
+  if(length(sugestoes_finais) == 0) {
+    sugestoes_finais <- "Nenhuma recomendação nova no momento."
+  }
+  
+  # Retornando o resultado e mostrando qual foi a nota base usada
+  resultado <- list(
+    Vizinho_Mais_Proximo = melhor_amigo,
+    Nota_Base_Da_Recomendacao = maior_nota_encontrada,
+    Filmes_Recomendados = sugestoes_finais
+  )
+  
+  return(resultado)
 }
 
-
-# -------------------------------------------------------
-# 2. ÁREA DE EXECUÇÃO (O SEU "MAIN")
-# -------------------------------------------------------
-# Encapsulando tudo em uma função principal para evitar bugs no RStudio
 
 main <- function() {
   # Catálogo fixo (Até 10 filmes)
