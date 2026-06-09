@@ -45,39 +45,39 @@ calcular_similaridade <- function(matriz_notas) {
 
 gerar_recomendacao <- function(usuario_alvo, matriz_notas, matriz_similaridade) {
   
-  # 1. Isola as afinidades do alvo
+  # isola as afinidades do alvo
   afinidades <- matriz_similaridade[usuario_alvo, ]
   
-  # 2. Descobre quem é o "Melhor Amigo" (o usuário com a maior pontuação de afinidade)
+  # descobre o amigo
   melhor_amigo <- names(sort(afinidades, decreasing = TRUE))[1]
   
-  # Proteção: Se a maior afinidade for 0, o alvo não tem nada em comum com ninguém
+  # se a maior afinidade for 0, o alvo não tem nada em comum com ninguém
   if(afinidades[melhor_amigo] == 0) {
     return("Não há usuários com gostos similares suficientes para gerar uma recomendação.")
   }
   
-  # 3. Pega as notas do Melhor Amigo e descobre qual foi a MAIOR nota que ele deu
+  # descobrir qual a maior nota do amigo 
   notas_do_amigo <- matriz_notas[melhor_amigo, ]
   
-  # Tira os 'NA' para a matemática conseguir achar o valor máximo
+  # achar os filmes com nota Max
   notas_validas_amigo <- notas_do_amigo[!is.na(notas_do_amigo)] 
   maior_nota_encontrada <- max(notas_validas_amigo)
   
-  # Agora filtra os filmes que receberam exatamente essa nota máxima
+  # filtra os filmes com a mesma nota
   filmes_que_o_amigo_amou <- names(notas_do_amigo[!is.na(notas_do_amigo) & notas_do_amigo == maior_nota_encontrada])
   
-  # 4. Pega a linha do alvo e descobre o que ele AINDA NÃO VIU (onde é NA)
+  # 4. pega a linha do alvo e descobre o que ele ainda não viu
   notas_do_alvo <- matriz_notas[usuario_alvo, ]
   filmes_nao_vistos <- names(notas_do_alvo[is.na(notas_do_alvo)])
   
-  # 5. O Match Lógico: Filmes com a nota máxima do amigo E que o alvo não viu
+  # filmes com a nota máxima do amigo E que o alvo não viu
   sugestoes_finais <- intersect(filmes_que_o_amigo_amou, filmes_nao_vistos)
   
   if(length(sugestoes_finais) == 0) {
     sugestoes_finais <- "Nenhuma recomendação nova no momento."
   }
   
-  # Retornando o resultado e mostrando qual foi a nota base usada
+  # Retorna o resultado e mostra qual foi a nota base usada
   resultado <- list(
     Vizinho_Mais_Proximo = melhor_amigo,
     Nota_Base_Da_Recomendacao = maior_nota_encontrada,
@@ -89,7 +89,6 @@ gerar_recomendacao <- function(usuario_alvo, matriz_notas, matriz_similaridade) 
 
 
 main <- function() {
-  # Catálogo fixo (Até 10 filmes)
   catalogo_padrao <- c("Matrix", "Duna", "Avatar", "Inception", "Interstellar", 
                        "Gladiador", "Alien", "Shrek", "Titanic", "Coringa")
   
@@ -118,8 +117,4 @@ main <- function() {
   }
 }
 
-# -------------------------------------------------------
-# INICIAR PROGRAMA
-# -------------------------------------------------------
-# Esta é a única linha que realmente "roda" solta no script
 main()
