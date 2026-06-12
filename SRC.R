@@ -88,13 +88,8 @@ gerar_recomendacao <- function(usuario_alvo, matriz_notas, matriz_similaridade) 
 }
 
 
-
-# -------------------------------------------------------
-# 2. ÁREA DE EXECUÇÃO (O SEU "MAIN")
-# -------------------------------------------------------
-
 main <- function() {
-  # Catálogo expandido (para gerar recomendações mais ricas)
+  # Catálogo
   catalogo_padrao <- c("Matrix", "Duna", "Avatar", "Inception", "Interstellar", 
                        "Gladiador", "Alien", "Shrek", "Titanic", "Coringa",
                        "Rocky", "Tubarão", "Halloween", "Psicose", "O Iluminado",
