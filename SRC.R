@@ -24,7 +24,7 @@ gerar_matriz_teste <- function(nomes_usuarios, catalogo_filmes) {
     c(1, 2, 3, 4, 5, NA), 
     size = (qtd_u * qtd_f), 
     replace = TRUE, 
-    prob = c(0.1, 0.1, 0.2, 0.2, 0.1, 0.3)
+    prob = c(0.05, 0.05, 0.05, 0.1, 0.05, 0.70)
   )
   
   return(matriz)
@@ -88,33 +88,61 @@ gerar_recomendacao <- function(usuario_alvo, matriz_notas, matriz_similaridade) 
 }
 
 
+
+# -------------------------------------------------------
+# 2. ÁREA DE EXECUÇÃO (O SEU "MAIN")
+# -------------------------------------------------------
+
 main <- function() {
+  # Catálogo expandido (para gerar recomendações mais ricas)
   catalogo_padrao <- c("Matrix", "Duna", "Avatar", "Inception", "Interstellar", 
-                       "Gladiador", "Alien", "Shrek", "Titanic", "Coringa")
+                       "Gladiador", "Alien", "Shrek", "Titanic", "Coringa",
+                       "Rocky", "Tubarão", "Halloween", "Psicose", "O Iluminado",
+                       "Toy Story", "Up", "Vingadores", "Batman", "Se7en")
   
   print("--- INICIALIZANDO O SISTEMA ---")
   meus_usuarios <- obter_usuarios()
   
-  # Verificação de segurança
+  # Verificação de segurança inicial
   if(length(meus_usuarios) > 0 && meus_usuarios[1] != "") {
     
     matriz_principal <- gerar_matriz_teste(meus_usuarios, catalogo_padrao)
-    print("--- Matriz de Notas (Banco de Dados) ---")
+    matriz_sim <- calcular_similaridade(matriz_principal)
+    
+    print("Notas_Usuários")
     print(matriz_principal)
     
-    matriz_sim <- calcular_similaridade(matriz_principal)
-    print("--- Matriz de Similaridade ---")
+    print("Afinidade_Usuários")
     print(matriz_sim)
-    
-    usuario_teste <- meus_usuarios[1] 
-    print(paste("--- Recomendações para o usuário:", usuario_teste, "---"))
-    
-    resultado <- gerar_recomendacao(usuario_teste, matriz_principal, matriz_sim)
-    print(resultado)
+  
+  
+    while(TRUE) {
+      cat("\n--------------------------------------------------\n")
+      usuario_alvo <- readline(prompt = "Digite o nome do usuário para recomendação (ou 'sair' para encerrar): ")
+      usuario_alvo <- trimws(usuario_alvo) # Limpa os espaços invisíveis
+      
+      if(tolower(usuario_alvo) == "sair") {
+        print("Encerrando o sistema.")
+        break 
+      }
+      
+      
+      # verifica se o nome digitado existe na lista original
+      if(usuario_alvo %in% meus_usuarios) {
+        
+        print(paste("--- Recomendações para o usuário:", usuario_alvo, "---"))
+        resultado <- gerar_recomendacao(usuario_alvo, matriz_principal, matriz_sim)
+        print(resultado)
+        
+      } else {
+        print(paste("Erro: O usuário '", usuario_alvo, "' não existe no sistema. Tente novamente.", sep=""))
+      }
+    }
     
   } else {
     print("Erro: Nenhum usuário foi fornecido para inicializar o sistema.")
   }
 }
+
 
 main()
